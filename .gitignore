@@ -1,0 +1,6 @@
+# Python Compiled
+__pycache__/
+*.py[cod]
+
+# virtualenv
+/env
