@@ -2,5 +2,10 @@
 __pycache__/
 *.py[cod]
 
+# Python Package
+/build/
+/dist/
+/*.egg-info/
+
 # virtualenv
 /env
