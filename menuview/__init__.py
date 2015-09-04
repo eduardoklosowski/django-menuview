@@ -10,9 +10,9 @@ from functools import total_ordering
 
 
 try:
-    SHOW_EMPTY_MENU = getattr(settings, 'MENUVIEW_SHOW_EMPTY_MENU', True)
+    HIDE_EMPTY_MENU = getattr(settings, 'MENUVIEW_HIDE_EMPTY_MENU', False)
 except ImproperlyConfigured:
-    SHOW_EMPTY_MENU = True
+    HIDE_EMPTY_MENU = False
 
 
 @total_ordering
@@ -55,7 +55,7 @@ class Menu(BaseMenu):
                                    permission_required=permission_required, parent=parent)
         self.children = []
 
-    def __add_item(self, item):
+    def __add_item_order(self, item):
         for i in range(len(self.children)):
             if item < self.children[i]:
                 self.children.insert(i, item)
@@ -65,24 +65,21 @@ class Menu(BaseMenu):
     def add_item(self, title, url, order=0, html_title=None, permission_required=None):
         item = MenuItem(title, url, order=order, html_title=html_title,
                         permission_required=permission_required, parent=self)
-        self.__add_item(item)
+        self.__add_item_order(item)
 
     def create_submenu(self, title, url, order=0, html_title=None, permission_required=None):
         menu = Menu(title, url, order=order, html_title=html_title,
                     permission_required=permission_required, parent=self)
-        self.__add_item(menu)
+        self.__add_item_order(menu)
         return menu
 
     def filter_children_permission(self, user):
-        def test(item):
-            if not item.permission_required:
-                return True
-            return user.has_perms(item.permission_required)
-        return [item for item in self.children if test(item)]
+        return [item for item in self.children
+                if not item.permission_required or user.has_perms(item.permission_required)]
 
     def html(self, user=None):
         items = self.children_html(user)
-        if not SHOW_EMPTY_MENU and not items:
+        if HIDE_EMPTY_MENU and not items:
             return ''
         title = self.get_html_title()
         if self.url:
